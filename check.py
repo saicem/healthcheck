@@ -5,23 +5,21 @@ from typing import Tuple
 import requests
 import random
 import json
+
+from requests.sessions import Session
 from useragent import rand_agent
 
 
 class HealthCheck:
-    __nickname: str
-    __sn: str
-    __id_card: str
     __province: str
     __city: str
     __county: str
     __street: str
-    __session_id: str
     __json_data: dict
     __is_in_school: bool
     __is_leave_chengdu: bool
     __temperature_list = ["36°C以下", "36.5°C~36.9°C"]
-    __useragent: str
+    __cur_session: Session
 
     def __init__(
         self,
@@ -34,9 +32,6 @@ class HealthCheck:
         street: str,
         is_in_school: bool,
     ) -> None:
-        self.__nickname = nickname
-        self.__sn = sn
-        self.__id_card = id_card
         self.__province = province
         self.__city = city
         self.__county = county
@@ -44,7 +39,8 @@ class HealthCheck:
         self.__json_data = {"sn": sn, "idCard": id_card, "nickname": nickname}
         self.__is_in_school = is_in_school
         self.__is_leave_chengdu = bool(1 - is_in_school)
-        self.__useragent = rand_agent()
+        self.__cur_session = requests.session()
+        self.__cur_session.headers.setdefault("User-Agent", rand_agent())
 
     # 获取 data 下的 session_id 别的没什么卵用 至于检测绑定 code 参数来历不明
     # 已绑定
@@ -71,12 +67,9 @@ class HealthCheck:
     # }
     def get_session_id(self):
         url = "https://zhxg.whut.edu.cn/yqtjwx/api/login/checkBind"
-        headers = {
-            "Referer": "https://servicewechat.com/wxa0738e54aae84423/9/page-frame.html",
-            "User-Agent": self.__useragent,
-        }
-        resp = requests.post(url=url, headers=headers, json=self.__json_data)
-        self.__session_id = json.loads(resp.text)["data"]["sessionId"]
+        resp = self.__cur_session.post(url=url, json=self.__json_data)
+        session_id = json.loads(resp.text)["data"]["sessionId"]
+        self.__cur_session.cookies.setdefault("JSESSIONID", session_id)
         logging.info(resp.text)
 
     # 绑定用户
@@ -126,12 +119,7 @@ class HealthCheck:
     # }
     def __get_bind_user_info(self) -> str:
         url = "https://zhxg.whut.edu.cn/yqtjwx/api/login/bindUserInfo"
-        headers = {
-            "Referer": "https://servicewechat.com/wxa0738e54aae84423/5/page-frame.html",
-            "Cookie": "JSESSIONID=%s" % self.__session_id,
-            "User-Agent": self.__useragent,
-        }
-        resp = requests.post(url=url, headers=headers, json=self.__json_data)
+        resp = self.__cur_session.post(url=url, json=self.__json_data)
         logging.info(resp.text)
         return resp.text
 
@@ -158,11 +146,6 @@ class HealthCheck:
             + str(self.__street)
         )
         url = "https://zhxg.whut.edu.cn/yqtjwx/./monitorRegister"
-        headers = {
-            "Referer": "https://servicewechat.com/wxa0738e54aae84423/5/page-frame.html",
-            "Cookie": "JSESSIONID=%s" % self.__session_id,
-            "User-Agent": self.__useragent,
-        }
         json_data = {
             "diagnosisName": "",
             "relationWithOwn": "",
@@ -179,7 +162,7 @@ class HealthCheck:
             "city": self.__city,
             "county": self.__county,
         }
-        resp = requests.post(url=url, headers=headers, json=json_data)
+        resp = self.__cur_session.post(url=url, json=json_data)
         logging.info(resp.text)
         return resp.text
 
@@ -200,12 +183,7 @@ class HealthCheck:
     # }
     def __cancel_bind(self):
         url = "https://zhxg.whut.edu.cn/yqtjwx/api/login/cancelBind"
-        headers = {
-            "Referer": "https://servicewechat.com/wxa0738e54aae84423/5/page-frame.html",
-            "Cookie": "JSESSIONID=%s" % self.__session_id,
-            "User-Agent": self.__useragent,
-        }
-        resp = requests.post(url=url, headers=headers)
+        resp = self.__cur_session.post(url=url)
         logging.info(resp.text)
 
     # 健康填报全过程
