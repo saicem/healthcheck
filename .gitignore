@@ -1,0 +1,4 @@
+*.pyc
+*.log
+user_info.json
+config.py
