@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*-coding:utf-8 -*-
-from check import HealthCheck
+from health import HealthSubmit
 import logging
-from send import send_qq_msg
+from send import sendQqMsg
 import json
 import config
+import time
 
 logging.basicConfig(
     format="%(levelname)s: %(asctime)s - %(filename)s:%(module)s[line:%(lineno)d] - %(message)s",
@@ -22,7 +23,7 @@ class HealthCheckForm:
     city: str
     county: str
     street: str
-    is_in_school: bool
+    isInSchool: bool
 
     def __init__(self, ls) -> None:
         self.nickname = ls[1]
@@ -32,7 +33,7 @@ class HealthCheckForm:
         self.city = ls[5]
         self.county = ls[6]
         self.street = ls[7]
-        self.is_in_school = ls[8]
+        self.isInSchool = ls[8]
 
 
 # data
@@ -64,14 +65,14 @@ class HealthCheckForm:
 #     "otherData": {},
 # }
 if __name__ == "__main__":
-    user_info_json = open(config.json_file, "r", encoding="utf8").read()
-    user_info = json.loads(user_info_json)
+    userInfoJson = open(config.json_file, "r", encoding="utf8").read()
+    userInfo = json.loads(userInfoJson)
 
-    for info in user_info:
+    for info in userInfo:
 
         check_form = HealthCheckForm(info)
 
-        msg, user_data = HealthCheck(
+        msg, user_data = HealthSubmit(
             check_form.nickname,
             check_form.sn,
             check_form.id_card,
@@ -79,10 +80,12 @@ if __name__ == "__main__":
             check_form.city,
             check_form.county,
             check_form.street,
-            check_form.is_in_school,
-        ).health_check()
+            check_form.isInSchool,
+        ).submit()
 
         if msg == "填报成功" or msg == "今日已填报":
-            send_qq_msg(info[0], "{},{}".format(user_data["name"], msg))
+            sendQqMsg(info[0], "{},{}".format(user_data["name"], msg))
         else:
-            send_qq_msg(info[0], msg)
+            sendQqMsg(info[0], msg)
+
+        time.sleep(1)

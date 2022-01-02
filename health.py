@@ -10,37 +10,37 @@ from requests.sessions import Session
 from useragent import rand_agent
 
 
-class HealthCheck:
+class HealthSubmit:
     __province: str
     __city: str
     __county: str
     __street: str
-    __json_data: dict
-    __is_in_school: bool
-    __is_leave_chengdu: bool
-    __temperature_list = ["36°C以下", "36.5°C~36.9°C"]
-    __cur_session: Session
+    __jsonData: dict
+    __isInSchool: bool
+    __isLeaveChengdu: bool
+    __temperatureList = ["36°C以下", "36.5°C~36.9°C"]
+    __curSession: Session
 
     def __init__(
         self,
         nickname: str,
         sn: str,
-        id_card: str,
+        idCard: str,
         province: str,
         city: str,
         county: str,
         street: str,
-        is_in_school: bool,
+        isInSchool: bool,
     ) -> None:
         self.__province = province
         self.__city = city
         self.__county = county
         self.__street = street
-        self.__json_data = {"sn": sn, "idCard": id_card, "nickname": nickname}
-        self.__is_in_school = is_in_school
-        self.__is_leave_chengdu = bool(1 - is_in_school)
-        self.__cur_session = requests.session()
-        self.__cur_session.headers.setdefault("User-Agent", rand_agent())
+        self.__jsonData = {"sn": sn, "idCard": idCard, "nickname": nickname}
+        self.__isInSchool = isInSchool
+        self.__isLeaveChengdu = bool(1 - isInSchool)
+        self.__curSession = requests.session()
+        self.__curSession.headers.setdefault("User-Agent", rand_agent())
 
     # 获取 data 下的 session_id 别的没什么卵用 至于检测绑定 code 参数来历不明
     # 已绑定
@@ -65,11 +65,11 @@ class HealthCheck:
     #     },
     #     "otherData": {}
     # }
-    def get_session_id(self):
+    def getSessionId(self):
         url = "https://zhxg.whut.edu.cn/yqtjwx/api/login/checkBind"
-        resp = self.__cur_session.post(url=url, json=self.__json_data)
-        session_id = json.loads(resp.text)["data"]["sessionId"]
-        self.__cur_session.cookies.setdefault("JSESSIONID", session_id)
+        resp = self.__curSession.post(url=url, json=self.__jsonData)
+        sessionId = json.loads(resp.text)["data"]["sessionId"]
+        self.__curSession.cookies.setdefault("JSESSIONID", sessionId)
         logging.info(resp.text)
 
     # 绑定用户
@@ -117,9 +117,9 @@ class HealthCheck:
     #     },
     #     "otherData": {}
     # }
-    def __get_bind_user_info(self) -> str:
+    def __getBindUserInfo(self) -> str:
         url = "https://zhxg.whut.edu.cn/yqtjwx/api/login/bindUserInfo"
-        resp = self.__cur_session.post(url=url, json=self.__json_data)
+        resp = self.__curSession.post(url=url, json=self.__jsonData)
         logging.info(resp.text)
         return resp.text
 
@@ -138,7 +138,7 @@ class HealthCheck:
     #     "data": null,
     #     "otherData": {}
     # }
-    def __submit_form(self) -> str:
+    def __submitForm(self) -> str:
         current_address = (
             str(self.__province)
             + str(self.__city)
@@ -154,15 +154,15 @@ class HealthCheck:
             "healthInfo": "正常",
             "isDiagnosis": 0,
             "isFever": 0,
-            "isInSchool": int(self.__is_in_school),
-            "isLeaveChengdu": int(self.__is_leave_chengdu),
+            "isInSchool": int(self.__isInSchool),
+            "isLeaveChengdu": int(self.__isLeaveChengdu),
             "isSymptom": "0",
-            "temperature": random.choice(self.__temperature_list),
+            "temperature": random.choice(self.__temperatureList),
             "province": self.__province,
             "city": self.__city,
             "county": self.__county,
         }
-        resp = self.__cur_session.post(url=url, json=json_data)
+        resp = self.__curSession.post(url=url, json=json_data)
         logging.info(resp.text)
         return resp.text
 
@@ -181,28 +181,28 @@ class HealthCheck:
     #     "data": null,
     #     "otherData": {}
     # }
-    def __cancel_bind(self):
+    def __cancelBind(self):
         url = "https://zhxg.whut.edu.cn/yqtjwx/api/login/cancelBind"
-        resp = self.__cur_session.post(url=url)
+        resp = self.__curSession.post(url=url)
         logging.info(resp.text)
 
     # 健康填报全过程
-    def health_check(self) -> Tuple[str, str]:
-        self.get_session_id()
-        json_bind = json.loads(self.__get_bind_user_info())
-        print(json_bind)
+    def submit(self) -> Tuple[str, str]:
+        self.getSessionId()
+        jsonBind = json.loads(self.__getBindUserInfo())
+        print(jsonBind)
         # 绑定是否成功
-        if json_bind["status"]:
-            user_data = json_bind["data"]["user"]
-            json_check = json.loads(self.__submit_form())
-            self.__cancel_bind()
+        if jsonBind["status"]:
+            userData = jsonBind["data"]["user"]
+            jsonCheck = json.loads(self.__submitForm())
+            self.__cancelBind()
 
-            if json_check["status"]:
-                return "填报成功", user_data
+            if jsonCheck["status"]:
+                return "填报成功", userData
             else:
                 # 今日已填报
-                return json_check["message"], user_data
+                return jsonCheck["message"], userData
         else:
-            self.__cancel_bind()
+            self.__cancelBind()
             # 该学号已被其它微信绑定 输入信息不符合
-            return json_bind["message"], None
+            return jsonBind["message"], None

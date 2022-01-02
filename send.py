@@ -6,7 +6,8 @@ import config
 params = {"qq": config.bot_qq, "funcname": "SendMsgV2"}
 
 
-def send_qq_msg(qq: str, msg: str):
+# 利用qq机器人发送消息
+def sendQqMsg(qq: str, msg: str):
     json = {
         "ToUserUid": qq,
         "SendToType": 1,
