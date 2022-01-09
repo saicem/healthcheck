@@ -24,6 +24,7 @@ class HealthCheckForm:
     county: str
     street: str
     isInSchool: bool
+    isInWuhan: bool
 
     def __init__(self, ls) -> None:
         self.nickname = ls[1]
@@ -34,6 +35,7 @@ class HealthCheckForm:
         self.county = ls[6]
         self.street = ls[7]
         self.isInSchool = ls[8]
+        self.isInWuhan = ls[9]
 
 
 # data
@@ -81,6 +83,7 @@ if __name__ == "__main__":
             check_form.county,
             check_form.street,
             check_form.isInSchool,
+            check_form.isInWuhan,
         ).submit()
 
         if msg == "填报成功" or msg == "今日已填报":

@@ -17,7 +17,7 @@ class HealthSubmit:
     __street: str
     __jsonData: dict
     __isInSchool: bool
-    __isLeaveChengdu: bool
+    __isLeaveWuhan: bool
     __temperatureList = ["36°C以下", "36.5°C~36.9°C"]
     __curSession: Session
 
@@ -31,6 +31,7 @@ class HealthSubmit:
         county: str,
         street: str,
         isInSchool: bool,
+        isInWuhan: bool,
     ) -> None:
         self.__province = province
         self.__city = city
@@ -38,7 +39,7 @@ class HealthSubmit:
         self.__street = street
         self.__jsonData = {"sn": sn, "idCard": idCard, "nickname": nickname}
         self.__isInSchool = isInSchool
-        self.__isLeaveChengdu = bool(1 - isInSchool)
+        self.__isLeaveWuhan = not isInWuhan
         self.__curSession = requests.session()
         self.__curSession.headers.setdefault("User-Agent", rand_agent())
 
@@ -155,7 +156,7 @@ class HealthSubmit:
             "isDiagnosis": 0,
             "isFever": 0,
             "isInSchool": int(self.__isInSchool),
-            "isLeaveChengdu": int(self.__isLeaveChengdu),
+            "isLeaveChengdu": int(self.__isLeaveWuhan),
             "isSymptom": "0",
             "temperature": random.choice(self.__temperatureList),
             "province": self.__province,
