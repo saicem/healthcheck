@@ -3,9 +3,8 @@
 from health import HealthSubmit
 import logging
 from send import sendQqMsg
-import json
-import config
 import time
+from user_info import USER_INFO
 
 logging.basicConfig(
     format="%(levelname)s: %(asctime)s - %(filename)s:%(module)s[line:%(lineno)d] - %(message)s",
@@ -26,16 +25,16 @@ class HealthCheckForm:
     isInSchool: bool
     isInWuhan: bool
 
-    def __init__(self, ls) -> None:
-        self.nickname = ls[1]
-        self.sn = ls[2]
-        self.id_card = ls[3]
-        self.province = ls[4]
-        self.city = ls[5]
-        self.county = ls[6]
-        self.street = ls[7]
-        self.isInSchool = ls[8]
-        self.isInWuhan = ls[9]
+    def __init__(self, userInfo: dict) -> None:
+        self.nickname = userInfo["wx_name"]
+        self.sn = userInfo["stu_id"]
+        self.id_card = userInfo["password"]
+        self.province = userInfo["province"]
+        self.city = userInfo["city"]
+        self.county = userInfo["county"]
+        self.street = userInfo["street"]
+        self.isInSchool = userInfo["isInSchool"]
+        self.isInWuhan = userInfo["isInWuhan"]
 
 
 # data
@@ -67,10 +66,8 @@ class HealthCheckForm:
 #     "otherData": {},
 # }
 if __name__ == "__main__":
-    userInfoJson = open(config.json_file, "r", encoding="utf8").read()
-    userInfo = json.loads(userInfoJson)
 
-    for info in userInfo:
+    for info in USER_INFO:
 
         check_form = HealthCheckForm(info)
 
@@ -87,8 +84,8 @@ if __name__ == "__main__":
         ).submit()
 
         if msg == "填报成功" or msg == "今日已填报":
-            sendQqMsg(info[0], "{},{}".format(user_data["name"], msg))
+            sendQqMsg(info["qq"], "{},{}".format(user_data["name"], msg))
         else:
-            sendQqMsg(info[0], msg)
+            sendQqMsg(info["qq"], msg)
 
         time.sleep(1)

@@ -2,3 +2,4 @@
 *.log
 user_info.json
 config.py
+user_info.py
